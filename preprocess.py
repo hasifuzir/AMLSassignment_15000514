@@ -15,7 +15,6 @@ labels_file = os.path.join(base_dir,'attribute_list.csv')
 test_dest = os.path.join(base_dir,'test')
 train_dest = os.path.join(base_dir,'train')
 
-
 # Removes noise images from the labels
 def remove_noise():
     # Read dataset
