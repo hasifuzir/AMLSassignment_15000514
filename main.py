@@ -18,16 +18,22 @@ results_dir = "./results"
 # Based on dataset of 5000 images
 batch_size = 32 #Size of batches for training and validation
 test_split = 0.2 #Ratio to split into training and testing images dataset, 0.2 yields 3652/913 split
-label_col = "smiling" #Class to train, validate and test on
+label_col = "eyeglasses" #Class to train, validate and test on
 
 # Set custom class weights to compensate for imbalanced data
 def weights_set(label_col):
     weights = {
-        "eyeglasses": {0: 2.438, 1: 1.},
-        "smiling": {0: 1., 1: 3.903},
-        "young": {0: 1., 1: 3.8},
-        "human": {0: 1.283, 1: 1.},
-        "hair_color": {0: 1., 1: 1., 2: 1., 3: 1., 4: 1., 5: 1., 6: 1.}
+        # weight_index: dataset_index
+        # Binary classes
+        # 0: -1, 1: 1
+        "eyeglasses": {0: 1., 1: 2.4375},
+        "smiling": {0: 3.90333, 1: 1.},
+        "young": {0: 3.80021, 1: 1.},
+        "human": {0: 1., 1: 1.2825},
+
+        # Multiclass classes
+        # 0: -1, 1: 0, 2: 1, 3: 2, 4: 3, 5: 5, 6: 5
+        "hair_color": {0: 4.364035, 1: 11.30682, 2: 1., 3: 1.819013, 4: 1.055143, 5: 1.26269, 6: 1.839187}
     }
 
 # Pass paths to modules that require them
