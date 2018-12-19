@@ -32,6 +32,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
         loss_mode = 'binary_crossentropy'
         metrics_mode = 'binary_accuracy'
         flow_mode = "binary"
+        classes = [-1, 1]
 
     else:
         output = 7
@@ -40,6 +41,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
         loss_mode = 'categorical_crossentropy'
         metrics_mode = 'categorical_accuracy'
         flow_mode = "categorical"
+        classes = [-1, 0, 1, 2, 3, 4, 5]
 
     classifier = Sequential() #Create Sequential object
 
@@ -83,8 +85,8 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     test_datagen = ImageDataGenerator(rescale = 1./255)
 
     #Takes dataframe input and images directory and generate batches of augmented data
-    train_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "training")
-    valid_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "validation")
+    train_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "training", classes = classes)
+    valid_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "validation", classes = classes)
     test_generator = test_datagen.flow_from_dataframe(dataframe = test_df, directory = test_dest, x_col = "file_name", y_col = None, has_ext = False, batch_size = 1, seed = 42, shuffle = False, class_mode = None, target_size = (256, 256)) #Batch size needs to be divisible by 913
 
     #Obtain steps required for training, evaluating and testing
@@ -97,7 +99,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     csv_logger = callbacks.CSVLogger('./logs/' + label_col + '_training_log.csv', separator=',', append=False)
 
     #Train model on generated data via batches
-    train_history = classifier.fit_generator(train_generator, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, epochs = 20, class_weight = weights, verbose = 1, callbacks = [tensorboard, csv_logger], workers = 8)
+    train_history = classifier.fit_generator(train_generator, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, epochs = 40, class_weight = weights, verbose = 1, callbacks = [tensorboard, csv_logger], workers = 8)
 
     # Evaluate model and assign loss and accuracy scores
     score = classifier.evaluate_generator(generator = valid_generator, steps = step_size_valid, verbose = 1)
@@ -113,7 +115,6 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
         predicted_class_indices = np.argmax(prediction, axis = 1)
 
     labels = (train_generator.class_indices) #Get the class label indices (so we know what 0 and 1 refers to)
-    print(labels)
     labels = dict((v,k) for k,v in labels.items()) #Reverse indices
     predictions = [labels[k] for k in predicted_class_indices] #Get all predictions (class) from dict
     filenames = test_generator.filenames #Get all filenames of predictions
