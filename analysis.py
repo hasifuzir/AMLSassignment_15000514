@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt #For plots
 import seaborn as sns #For nicer plots
 import pandas as pd
 import os
+import csv
 
 # Obtain results directory and create it if it doesn't exist
 def get_paths(results_directory):
@@ -48,8 +49,13 @@ def plot_graph(train_history, label_col, mode):
     return 0
 
 # Save prediction results to csv
-def save_pred(results, label_col):
-    results.to_csv(results_dir + "/results_" + label_col + ".csv", header = False, index = False)
+def save_pred(results, label_col, score):
+    with open(results_dir + "/results_" + label_col + ".csv", "w", newline = '') as csv_file:
+        writer = csv.writer(csv_file, delimiter = ',')
+        writer.writerow([round(score, 4), ''])
+
+    results.to_csv(results_dir + "/results_" + label_col + ".csv", header = False, index = False, mode = 'a')
+
     print("Saved results file to results_" + label_col + ".csv !")
 
     return 0
