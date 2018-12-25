@@ -119,6 +119,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Callbacks
     tensorboard = callbacks.TensorBoard(log_dir='./logs', histogram_freq = 0, write_graph = True, write_images = True)
     csv_logger = callbacks.CSVLogger('./logs/' + label_col + '_training_log.csv', separator=',', append=False)
+    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=40, verbose=0, mode='auto')
 
     # Checks how to set class_weight parameter in fit_generator based on user input
     if weights == 'auto':
@@ -140,7 +141,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
         class_weights = weights
 
     #Train model on generated data via batches
-    train_history = classifier.fit_generator(train_generator, epochs = 40, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger], workers = 10)
+    train_history = classifier.fit_generator(train_generator, epochs = 100, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger, early_stopping], workers = 10)
 
     classifier.summary()
 
