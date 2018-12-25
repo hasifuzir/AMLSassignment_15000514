@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt #For plots
+import matplotlib.axes as ax
 import seaborn as sns #For nicer plots
 import pandas as pd
 import os
@@ -19,8 +20,9 @@ def get_paths(results_directory):
 def plot_graph(train_history, label_col, mode):
 
     # Obtain scores from history
-    loss = train_history.history['loss']
+    loss = train_history.history['loss'] #List
     val_loss = train_history.history['val_loss']
+
 
     if mode == 0:
         acc = train_history.history['binary_accuracy']
@@ -31,18 +33,32 @@ def plot_graph(train_history, label_col, mode):
 
     # Plot loss scores
     sns.set_style("whitegrid")
-    plt.plot(loss)
-    plt.plot(val_loss)
-    plt.title('Model Loss')
-    plt.legend(['Loss', 'Validation Loss'])
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(loss, label = "Loss")
+    ax.plot(val_loss, label = "Validation Loss")
+    ax.set_title('Model Loss')
+    ax.legend(loc = "upper right")
+    ax.set_xlim([0, 100])
+    ax.set_ylabel("Loss")
+    ax.set_xlabel("Epochs")
+    ax.minorticks_on()
+    ax.grid(b=True, which='major')
+    ax.grid(b=True, which='minor')
     plt.savefig(results_dir + '/' + label_col + '_loss.png')
     plt.show()
 
     # Plot accuracy scores
-    plt.plot(acc)
-    plt.plot(val_acc)
-    plt.title('Model Accuracy')
-    plt.legend(['Accuracy', 'Validation Accuracy'])
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(acc, label = "Accuracy")
+    ax.plot(val_acc, label = "Validation Accuracy")
+    ax.set_title('Model Accuracy')
+    ax.legend(loc = "lower right")
+    ax.set_xlim([0, 100])
+    ax.grid(b=True, which='major')
+    ax.grid(b=True, which='minor')
+    ax.set_ylabel("Accuracy")
+    ax.set_xlabel("Epochs")
+    ax.minorticks_on()
     plt.savefig(results_dir + '/' + label_col + '_acc.png')
     plt.show()
 
