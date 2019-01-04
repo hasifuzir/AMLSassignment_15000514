@@ -38,7 +38,7 @@ def plot_graph(train_history, label_col, mode):
     ax.plot(val_loss, label = "Validation Loss")
     ax.set_title('Model Loss')
     ax.legend(loc = "upper right")
-    ax.set_xlim([0, 100])
+    ax.set_xlim([0, 50])
     ax.set_ylabel("Loss")
     ax.set_xlabel("Epochs")
     ax.minorticks_on()
@@ -53,7 +53,7 @@ def plot_graph(train_history, label_col, mode):
     ax.plot(val_acc, label = "Validation Accuracy")
     ax.set_title('Model Accuracy')
     ax.legend(loc = "lower right")
-    ax.set_xlim([0, 100])
+    ax.set_xlim([0, 50])
     ax.grid(b=True, which='major')
     ax.grid(b=True, which='minor')
     ax.set_ylabel("Accuracy")
@@ -66,12 +66,24 @@ def plot_graph(train_history, label_col, mode):
 
 # Save prediction results to csv
 def save_pred(results, label_col, score):
-    with open(results_dir + "/results_" + label_col + ".csv", "w", newline = '') as csv_file:
+    def task_set(label_col):
+        return {
+            # weight_index: dataset_index
+            # Binary classes
+            # 0: -1, 1: 1
+            "smiling": "1",
+            "young": "2",
+            "eyeglasses": "3",
+            "human": "4",
+            "hair_color": "5"
+        }.get(label_col, '0') #rturns proper class weight, else returns auto which will let sklearn to calculate it automatically
+
+    with open(results_dir + "/task_" + task_set(label_col) + ".csv", "w", newline = '') as csv_file:
         writer = csv.writer(csv_file, delimiter = ',')
         writer.writerow([round(score, 4), ''])
 
-    results.to_csv(results_dir + "/results_" + label_col + ".csv", header = False, index = False, mode = 'a')
+    results.to_csv(results_dir + "/task_" +  task_set(label_col) + ".csv", header = False, index = False, mode = 'a')
 
-    print("Saved results file to results_" + label_col + ".csv !")
+    print("Saved results file to task_" +  task_set(label_col) + ".csv !")
 
     return 0
