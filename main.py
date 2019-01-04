@@ -18,7 +18,7 @@ results_dir = "./results"
 # Based on dataset of 5000 images
 batch_size = 32 #Size of batches for training and validation
 test_split = 0.2 #Ratio to split into training and testing images dataset, 0.2 yields 3652/913 split
-label_col = "young" #Class to train, validate and test on
+label_col = "hair_color" #Class to train, validate and test on
 #0 for manual class_weights, 1 for auto set, 2 for auto set with NaN suppression (multiclass only!) , 3 for equal weights
 weights_mode = 'auto'
 
@@ -28,9 +28,9 @@ def manual_weights_set(label_col):
         # weight_index: dataset_index
         # Binary classes
         # 0: -1, 1: 1
-        "eyeglasses": {0: 1., 1: 2.4375},
         "smiling": {0: 3.90333, 1: 1.},
         "young": {0: 3.80021, 1: 1.},
+        "eyeglasses": {0: 1., 1: 2.4375},
         "human": {0: 1., 1: 1.2825},
 
         # Multiclass classes
@@ -63,10 +63,10 @@ data = prep.remove_noise(labels_file)
 
 # Obtain training and testing datasets and save testing answers as csv file
 train_df, test_df = prep.split_images_binary(data, test_split)
-#prep.save_answers(test_df, label_col)
+prep.save_answers(test_df, label_col)
 
 # Train CNN and obtain results csv, keras training history and metric scores
-results, train_history, score = cls.train_CNN(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
+results, train_history, score = cls.train_Inception(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
 
 # Print Test loss and accuracy
 print('Test loss:', score[0])
@@ -80,6 +80,6 @@ if pred_mode == 1:
 analysis.plot_graph(train_history, label_col, pred_mode)
 
 # Save prediction results to csv
-#analysis.save_pred(results, label_col, score[1])
+analysis.save_pred(results, label_col, score[1])
 
 #Pass prediction dataframes so we can plot graphs and stuff?
