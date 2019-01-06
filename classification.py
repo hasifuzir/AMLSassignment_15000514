@@ -6,16 +6,17 @@ from keras.layers import Flatten #To convert 2D arrays to a single linear vect
 from keras.layers import Dense #To perform NN connections
 from keras.layers import Dropout #For regularization
 from keras.layers import GlobalAveragePooling2D
+from keras import regularizers
 import keras.callbacks as callbacks #To use TensorBoard
 from keras import optimizers #To use custom parameters for optimizers
 from keras.preprocessing.image import ImageDataGenerator #To augment images
-from keras.applications.inception_v3 import InceptionV3, preprocess_input
+from keras.applications.inception_v3 import InceptionV3, preprocess_input #For the Inception v3 model
 from PIL import Image #ImageDataGenerator requires this
 import numpy as np #For use of numpy arrays
 import pandas as pd #To use dataframes, from other methods
 from keras import metrics #For model metrics, to determine performance
 from sklearn.utils import class_weight #To calculate weights
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix #To produce confusion matrices
 
 # Obtain training and testing directory paths
 #Inputs train and test directories and saves them as global vars for other methods
@@ -26,7 +27,6 @@ def get_paths(train_directory, test_directory):
 
     train_dest = train_directory
     test_dest = test_directory
-
     return 0
 
 # A simple CNN with 3 conv layers, 3 max pooling layers, 2 FC layers for binary and multiclass image classification
@@ -49,8 +49,10 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Check if binary or multiclass classification and sets parameters
     if mode == 0:
         output = 1
+        #sigmoid, softmax, elu, softplus, relu, tanh
         final_activation = 'sigmoid'
         optimizer_mode = adam
+        #binary_crossentropy, mean_squared_error, hinge, kullback_leibler_divergence, poisson
         loss_mode = 'binary_crossentropy'
         metrics_mode = ['binary_accuracy']
         flow_mode = "binary"
@@ -75,16 +77,16 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     # Pool size: 2X2
     classifier.add(MaxPooling2D(pool_size=(2, 2)))
     # Dropout for regularisation
-    #classifier.add(Dropout(0.25))
+    #classifier.add(Dropout(0.2))
 
     #More convolution and pooling layers
     classifier.add(Conv2D(32, (3,3), activation = 'relu'))
     classifier.add(MaxPooling2D(pool_size=(2, 2)))
-    #classifier.add(Dropout(0.25))
+    #classifier.add(Dropout(0.2))
 
     classifier.add(Conv2D(64, (3,3), activation = 'relu'))
     classifier.add(MaxPooling2D(pool_size=(2, 2)))
-    #classifier.add(Dropout(0.25))
+    #classifier.add(Dropout(0.2))
 
     # Flattening
     # Convert 3D feature map to 1D feature vector
@@ -94,7 +96,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     # A fully connected layer
     # Nodes: 128, Activation function: Rectifier Linear Unit
     classifier.add(Dense(units = 128, activation = 'relu'))
-    #classifier.add(Dropout(0.5))
+    #classifier.add(Dropout(0.2))
 
     # Output layer
     # One node for binary output
@@ -108,7 +110,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Realtime image augmentation
     #Rescale: rescales RGB values to 0-1
     #, rotation_range = 40, width_shift_range=0.2, height_shift_range=0.2, fill_mode='nearest'
-    train_datagen = ImageDataGenerator(rescale = 1./255, validation_split = 0.25, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True)
+    train_datagen = ImageDataGenerator(rescale = 1./255, validation_split = 0.25, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True, rotation_range = 20, width_shift_range=0.2, height_shift_range=0.2, fill_mode='nearest' )
     test_datagen = ImageDataGenerator(rescale = 1./255) #We don't modify the testing images as we are only doing predictions
 
     #Takes dataframe input and images directory and generate batches of augmented data
@@ -126,7 +128,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Callbacks
     tensorboard = callbacks.TensorBoard(log_dir='./logs', histogram_freq = 0, write_graph = True, write_images = True)
     csv_logger = callbacks.CSVLogger('./logs/' + label_col + '_training_log.csv', separator=',', append=False)
-    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=1, verbose=0, mode='auto')
+    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=0, mode='auto')
 
     # Checks how to set class_weight parameter in fit_generator based on user input
     if weights == 'auto':
@@ -148,7 +150,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
         class_weights = weights
 
     #Train model on generated data via batches
-    train_history = classifier.fit_generator(train_generator, epochs = 100, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger], workers = 10)
+    train_history = classifier.fit_generator(train_generator, epochs = 100, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger, early_stopping], workers = 10)
 
     classifier.summary()
 
