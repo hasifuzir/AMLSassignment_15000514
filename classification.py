@@ -6,7 +6,7 @@ from keras.layers import Flatten #To convert 2D arrays to a single linear vect
 from keras.layers import Dense #To perform NN connections
 from keras.layers import Dropout #For regularization
 from keras.layers import GlobalAveragePooling2D
-from keras import regularizers
+from keras import regularizers #For L1 and L2 regularisation
 import keras.callbacks as callbacks #To use TensorBoard
 from keras import optimizers #To use custom parameters for optimizers
 from keras.preprocessing.image import ImageDataGenerator #To augment images
@@ -152,8 +152,6 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Train model on generated data via batches
     train_history = classifier.fit_generator(train_generator, epochs = 100, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger, early_stopping], workers = 10)
 
-    classifier.summary()
-
     # Save weights
     classifier.save_weights('CNN.h5')
 
@@ -177,11 +175,9 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     filenames = test_generator.filenames #Get all filenames of predictions
     results = pd.DataFrame({"Filename":filenames, "Predictions":predictions}) #Save filename and predictions to a dataframe
 
-    print(confusion_matrix(test_index.classes, predicted_class_indices))
-    print(classification_report(test_index.classes, predicted_class_indices))
-
     return results, train_history, score
 
+#An MLP with 2 hidden layers
 def train_MLP(train_df, test_df, label_col, batch, weights, mode):
     #Top 3 categorical accuracy method
     def top_3_categorical_accuracy(y_true, y_pred):
@@ -219,11 +215,10 @@ def train_MLP(train_df, test_df, label_col, batch, weights, mode):
     # Convert 3D feature map to 1D feature vector
     classifier.add(Flatten(input_shape = (256, 256, 3)))
 
-    # Fully Connected/ Hidden layer
+    # Fully Connected/ Hidden layers
     # A fully connected layer
     # Nodes: 128, Activation function: Rectifier Linear Unit
     classifier.add(Dense(units = 128, activation = 'relu'))
-
     classifier.add(Dense(units = 128, activation = 'relu'))
 
     # Output layer
@@ -231,7 +226,7 @@ def train_MLP(train_df, test_df, label_col, batch, weights, mode):
     # Activation function: Sigmoid
     classifier.add(Dense(units = output, activation = final_activation))
 
-    # Compile CNN
+    # Compile MLP
     # Optimiser parameter: adam, Loss function: Binary Crossentropy, Performance metric: Binary Accuracy
     classifier.compile(optimizer = optimizer_mode, loss = loss_mode, metrics = metrics_mode)
 
@@ -279,8 +274,6 @@ def train_MLP(train_df, test_df, label_col, batch, weights, mode):
     #Train model on generated data via batches
     train_history = classifier.fit_generator(train_generator, epochs = 200, class_weight = class_weights, steps_per_epoch = step_size_train, validation_data = valid_generator, validation_steps = step_size_valid, verbose = 1, callbacks = [csv_logger, early_stopping], workers = 10)
 
-    classifier.summary()
-
     # Save weights
     classifier.save_weights('MLP.h5')
 
@@ -304,12 +297,12 @@ def train_MLP(train_df, test_df, label_col, batch, weights, mode):
     filenames = test_generator.filenames #Get all filenames of predictions
     results = pd.DataFrame({"Filename":filenames, "Predictions":predictions}) #Save filename and predictions to a dataframe
 
-    print(confusion_matrix(valid_generator.classes, predicted_class_indices))
-
     return results, train_history, score
 
+#Inception v3 model
+#C. Szegedy, V. Vanhoucke, S. Ioffe, J. Shlens and Z. Wojna, "Rethinking the Inception Architecture for Computer Vision", 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2016. Available: 10.1109/cvpr.2016.308.
+#https://arxiv.org/pdf/1512.00567.pdf
 def train_Inception(train_df, test_df, label_col, batch, weights, mode):
-
     #Top 3 categorical accuracy method
     def top_3_categorical_accuracy(y_true, y_pred):
         return metrics.top_k_categorical_accuracy(y_true, y_pred, k=3)
@@ -340,19 +333,21 @@ def train_Inception(train_df, test_df, label_col, batch, weights, mode):
         flow_mode = "categorical"
         classes = [-1, 0, 1, 2, 3, 4, 5]
 
+    #Create a base model using the built-in Inceptionv3 model in Keras
     base_model = InceptionV3(weights='imagenet', include_top = False, input_shape = (299, 299, 3), pooling = 'avg')
 
+    #Classifier for the model
     x = base_model.output
-
     res_predictions = Dense(units = output, activation = final_activation)(x)
 
+    #Create a functional API model using Inception v3 and a new classifier
     transfer = Model(inputs=base_model.input, outputs= res_predictions)
-    transfer.summary()
 
+    #Optional freezing of layers if not enough GPU memory
     #for layer in transfer.layers[:52]: #Freeze block 1
         #layer.trainable = False
 
-    # Compile CNN
+    # Compile model
     # Optimiser parameter: adam, Loss function: Binary Crossentropy, Performance metric: Binary Accuracy
     transfer.compile(optimizer = optimizer_mode, loss = loss_mode, metrics = metrics_mode)
 
@@ -419,8 +414,5 @@ def train_Inception(train_df, test_df, label_col, batch, weights, mode):
     predictions = [labels[k] for k in predicted_class_indices] #Get all predictions (class) from dict
     filenames = test_generator.filenames #Get all filenames of predictions
     results = pd.DataFrame({"Filename":filenames, "Predictions":predictions}) #Save filename and predictions to a dataframe
-
-    print(confusion_matrix(test_index.classes, predicted_class_indices))
-    print(classification_report(test_index.classes, predicted_class_indices))
 
     return results, train_history, score
