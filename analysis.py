@@ -3,7 +3,7 @@ import matplotlib.axes as ax
 import seaborn as sns #For nicer plots
 import pandas as pd
 import os
-import csv
+import csv #To handle CSV files
 
 # Obtain results directory and create it if it doesn't exist
 def get_paths(results_directory):
@@ -23,7 +23,7 @@ def plot_graph(train_history, label_col, mode):
     loss = train_history.history['loss'] #List
     val_loss = train_history.history['val_loss']
 
-
+    #Check if binary or multiclass problem to obtain correct metrics
     if mode == 0:
         acc = train_history.history['binary_accuracy']
         val_acc = train_history.history['val_binary_accuracy']
@@ -61,7 +61,6 @@ def plot_graph(train_history, label_col, mode):
     ax.minorticks_on()
     plt.savefig(results_dir + '/' + label_col + '_acc.png')
     plt.show()
-
     return 0
 
 # Save prediction results to csv
@@ -78,10 +77,12 @@ def save_pred(results, label_col, score):
             "hair_color": "5"
         }.get(label_col, '0') #rturns proper class weight, else returns auto which will let sklearn to calculate it automatically
 
+    #Write acccuracy score to CSV first
     with open(results_dir + "/task_" + task_set(label_col) + ".csv", "w", newline = '') as csv_file:
         writer = csv.writer(csv_file, delimiter = ',')
         writer.writerow([round(score, 4), ''])
 
+    #Save predictions
     results.to_csv(results_dir + "/task_" +  task_set(label_col) + ".csv", header = False, index = False, mode = 'a')
 
     print("Saved results file to task_" +  task_set(label_col) + ".csv !")
