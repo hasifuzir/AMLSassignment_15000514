@@ -18,7 +18,8 @@ results_dir = "./results"
 # Based on dataset of 5000 images
 batch_size = 32 #Size of batches for training and validation
 test_split = 0.2 #Ratio to split into training and testing images dataset, 0.2 yields 3652/913 split
-label_col = "hair_color" #Class to train, validate and test on
+label_col = 'eyeglasses'
+ #Class to train, validate and test on
 #0 for manual class_weights, 1 for auto set, 2 for auto set with NaN suppression (multiclass only!) , 3 for equal weights
 weights_mode = 'auto'
 
@@ -35,7 +36,7 @@ def manual_weights_set(label_col):
 
         # Multiclass classes
         # 0: -1, 1: 0, 2: 1, 3: 2, 4: 3, 5: 5, 6: 5
-        "hair_color": {0: 0., 1: 11.30682, 2: 1., 3: 1.819013, 4: 1.055143, 5: 1.26269, 6: 1.839187}
+        "hair_color": {0: 1.5, 1: 11.30682, 2: 1., 3: 1.819013, 4: 1.055143, 5: 1.26269, 6: 1.839187}
     }.get(label_col, 'auto') #rturns proper class weight, else returns auto which will let sklearn to calculate it automatically
 
 # Check if user specifies auto class_weight setting
@@ -66,7 +67,8 @@ train_df, test_df = prep.split_images_binary(data, test_split)
 prep.save_answers(test_df, label_col)
 
 # Train CNN and obtain results csv, keras training history and metric scores
-results, train_history, score = cls.train_Inception(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
+results, train_history, score = cls.train_CNN(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
+#results, train_history, score = cls.train_Inception(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
 
 # Print Test loss and accuracy
 print('Test loss:', score[0])
