@@ -20,7 +20,7 @@ test_split = 0.2 #Ratio to split into training and testing images dataset, 0.2 y
 label_col = 'eyeglasses'
  #Class to train, validate and test on
  #auto, manual, equal, nan_suppress (only for multiclass!)
-weights_mode = 'auto'
+weights_mode = 'equal'
 
 # Function to set get custom weight dict based on class
 def manual_weights_set(label_col):
@@ -61,11 +61,12 @@ data = prep.remove_noise(labels_file)
 
 # Obtain training and testing datasets and save testing answers as csv file
 train_df, test_df = prep.split_images_binary(data, test_split)
-prep.save_answers(test_df, label_col)
+#prep.save_answers(test_df, label_col)
 
 # Train CNN and obtain results csv, keras training history and metric scores
 results, train_history, score = cls.train_CNN(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
 #results, train_history, score = cls.train_Inception(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
+#results, train_history, score = cls.train_MLP(train_df, test_df, label_col, batch_size, weights_mode_set(weights_mode), pred_mode)
 
 # Print Test loss and accuracy
 print('Test loss:', score[0])
