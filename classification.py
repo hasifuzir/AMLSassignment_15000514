@@ -27,6 +27,7 @@ def get_paths(train_directory, test_directory):
 
     train_dest = train_directory
     test_dest = test_directory
+    #test_dest = "./dataset/test_dataset/"
     return 0
 
 # A simple CNN with 3 conv layers, 3 max pooling layers, 2 FC layers for binary and multiclass image classification
@@ -110,15 +111,14 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Realtime image augmentation
     #Rescale: rescales RGB values to 0-1
     #, rotation_range = 40, width_shift_range=0.2, height_shift_range=0.2, fill_mode='nearest'
-    train_datagen = ImageDataGenerator(rescale = 1./255, validation_split = 0.25, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True, rotation_range = 20, width_shift_range=0.2, height_shift_range=0.2, fill_mode='nearest' )
+    train_datagen = ImageDataGenerator(rescale = 1./255, validation_split = 0.25, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True)
     test_datagen = ImageDataGenerator(rescale = 1./255) #We don't modify the testing images as we are only doing predictions
 
     #Takes dataframe input and images directory and generate batches of augmented data
     train_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "training", classes = classes)
     valid_generator = train_datagen.flow_from_dataframe(dataframe = train_df, directory = train_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = batch, seed = 42, shuffle = True, class_mode = flow_mode, target_size = (256, 256), subset = "validation", classes = classes)
     test_generator = test_datagen.flow_from_dataframe(dataframe = test_df, directory = test_dest, x_col = "file_name", y_col = None, has_ext = False, batch_size = 1, seed = 42, shuffle = False, class_mode = None, target_size = (256, 256)) #Returns images
-    test_index = test_datagen.flow_from_dataframe(dataframe = test_df, directory = test_dest, x_col = "file_name", y_col = label_col, has_ext = False, batch_size = 1, seed = 42, shuffle = False, class_mode = flow_mode, target_size = (256, 256)) #Returns images
-
+    #test_generator = test_datagen.flow_from_directory(directory = test_dest, batch_size = 1, seed = 42, shuffle = False, class_mode = None, target_size = (256, 256)) #Returns images
 
     #Obtain steps required for training, evaluating and testing
     step_size_train = train_generator.n//train_generator.batch_size
@@ -128,7 +128,7 @@ def train_CNN(train_df, test_df, label_col, batch, weights, mode):
     #Callbacks
     tensorboard = callbacks.TensorBoard(log_dir='./logs', histogram_freq = 0, write_graph = True, write_images = True)
     csv_logger = callbacks.CSVLogger('./logs/' + label_col + '_training_log.csv', separator=',', append=False)
-    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=0, mode='auto')
+    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=3, verbose=0, mode='auto')
 
     # Checks how to set class_weight parameter in fit_generator based on user input
     if weights == 'auto':
